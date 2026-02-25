@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ListSelector from "@/components/ListSelector";
 import TaskLogList from "@/components/TaskLogList";
+import ApiInst from "@/components/ApiInst";
 
 async function getTaskData(
   taskId: string,
@@ -30,13 +31,16 @@ async function getTaskData(
     updated_at: taskRow.updated_at ? Number(taskRow.updated_at) : null,
   };
 
-  const logs: TaskLog[] = logsResult.rows.map((r: any) => ({
-    id: String(r.id),
-    task_id: String(r.task_id),
-    from_list: r.from_list ?? null,
-    to_list: String(r.to_list) as TaskLog["to_list"],
-    created_at: r.created_at ? Number(r.created_at) : null,
-  }));
+  const logs: TaskLog[] = logsResult.rows.map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: String(r.id),
+      task_id: String(r.task_id),
+      from_list: (r.from_list as TaskLog["from_list"]) ?? null,
+      to_list: String(r.to_list) as TaskLog["to_list"],
+      created_at: r.created_at ? Number(r.created_at) : null,
+    };
+  });
 
   return { task, logs };
 }
@@ -70,18 +74,19 @@ export default async function TaskDetailPage({
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const apiPath = `/api/u/${userId}/tasks/${taskId}`;
   const apiUrl = `${baseUrl}${apiPath}`;
-
-  const curlCommand = `curl -X PATCH ${apiUrl} -H "Content-Type: application/json" -d '{"list":"now"}'`;
-  const wgetCommand = `wget --method=PATCH --body-data='{"list":"now"}' --header="Content-Type: application/json" ${apiUrl}`;
+  const backHref =
+    task.list === "done"
+      ? `/u/${userId}/done`
+      : `/u/${userId}/swipe/${task.list}`;
 
   return (
     <main style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <header style={{ marginBottom: "20px" }}>
         <Link
-          href={`/u/${userId}`}
+          href={backHref}
           style={{ color: "var(--primary)", fontWeight: "bold" }}
         >
-          ← Back to Home
+          ← Back to List
         </Link>
       </header>
 
@@ -111,52 +116,7 @@ export default async function TaskDetailPage({
         <TaskLogList userId={userId} taskId={taskId} logs={logs} />
       </section>
 
-      <section
-        style={{
-          padding: "20px",
-          backgroundColor: "#f8f8f8",
-          borderRadius: "15px",
-          border: "1px dashed #ccc",
-        }}
-      >
-        <h2 style={{ fontSize: "1rem", marginBottom: "10px" }}>
-          Remote Update Commands
-        </h2>
-        <div style={{ marginBottom: "15px" }}>
-          <p style={{ fontSize: "0.8rem", marginBottom: "5px", opacity: 0.7 }}>
-            cURL:
-          </p>
-          <code
-            style={{
-              fontSize: "0.75rem",
-              display: "block",
-              wordBreak: "break-all",
-              backgroundColor: "#eee",
-              padding: "10px",
-              borderRadius: "5px",
-            }}
-          >
-            {curlCommand}
-          </code>
-        </div>
-        <div>
-          <p style={{ fontSize: "0.8rem", marginBottom: "5px", opacity: 0.7 }}>
-            Wget:
-          </p>
-          <code
-            style={{
-              fontSize: "0.75rem",
-              display: "block",
-              wordBreak: "break-all",
-              backgroundColor: "#eee",
-              padding: "10px",
-              borderRadius: "5px",
-            }}
-          >
-            {wgetCommand}
-          </code>
-        </div>
-      </section>
+      <ApiInst apiUrl={apiUrl} />
     </main>
   );
 }

@@ -7,16 +7,17 @@ async function getDoneTasks(userId: string) {
     sql: "SELECT * FROM tasks WHERE user_id = ? AND list = 'done' ORDER BY updated_at DESC",
     args: [userId],
   });
-  return result.rows.map(
-    (r: any): Task => ({
+  return result.rows.map((row): Task => {
+    const r = row as Record<string, unknown>;
+    return {
       id: String(r.id),
       user_id: String(r.user_id),
       content: String(r.content),
       list: String(r.list) as Task["list"],
       created_at: r.created_at ? Number(r.created_at) : null,
       updated_at: r.updated_at ? Number(r.updated_at) : null,
-    }),
-  );
+    };
+  });
 }
 
 export default async function DonePage({
@@ -44,7 +45,7 @@ export default async function DonePage({
         {tasks.length === 0 && (
           <p style={{ color: "var(--text-gray)" }}>No completed tasks yet.</p>
         )}
-        {tasks.map((task: any) => (
+        {tasks.map((task) => (
           <Link
             key={task.id}
             href={`/u/${userId}/tasks/${task.id}`}
@@ -59,7 +60,10 @@ export default async function DonePage({
           >
             <div style={{ fontWeight: "bold" }}>{task.content}</div>
             <div style={{ fontSize: "0.8rem", opacity: 0.5 }}>
-              Completed: {new Date(task.updated_at * 1000).toLocaleString()}
+              Completed:{" "}
+              {task.updated_at
+                ? new Date(task.updated_at * 1000).toLocaleString()
+                : "-"}
             </div>
           </Link>
         ))}

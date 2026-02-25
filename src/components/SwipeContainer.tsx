@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   motion,
   AnimatePresence,
+  useAnimationControls,
   useMotionValue,
   useTransform,
+  type PanInfo,
 } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+type SwipeDirection = "right" | "left" | "up" | "down";
 
 interface Task {
   id: string;
@@ -20,80 +24,54 @@ interface SwipeContainerProps {
   initialTasks: Task[];
   userId: string;
   currentList: string;
+  fromList?: string;
 }
 
 export default function SwipeContainer({
   initialTasks,
   userId,
   currentList,
+  fromList,
 }: SwipeContainerProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks] = useState<Task[]>(initialTasks);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [keyboardSwipe, setKeyboardSwipe] = useState<{
+    direction: SwipeDirection;
+    nonce: number;
+  } | null>(null);
   const router = useRouter();
 
   const currentTask = tasks[currentIndex];
 
-  const handleSwipe = async (direction: "right" | "left" | "up" | "down") => {
-    if (!currentTask) return;
-
-    let targetList = "";
-
-    if (direction === "up") targetList = "done";
-    else {
-      switch (currentList) {
-        case "inbox":
-          if (direction === "right") targetList = "now";
-          if (direction === "left") targetList = "next";
-          if (direction === "down") targetList = "waiting";
-          break;
-        case "now":
-          if (direction === "right") targetList = "now"; // back to end of now
-          if (direction === "left") targetList = "next";
-          if (direction === "down") targetList = "waiting";
-          break;
-        case "waiting":
-          if (direction === "right") targetList = "now";
-          if (direction === "left") targetList = "next";
-          if (direction === "down") targetList = "waiting"; // back to end of waiting
-          break;
-        case "next":
-          if (direction === "right") targetList = "now";
-          if (direction === "left") targetList = "next"; // back to end of next
-          if (direction === "down") targetList = "waiting";
-          break;
-      }
+  const getTransitionOffset = () => {
+    if (!fromList || fromList === currentList) {
+      return { x: 0, y: 0 };
     }
 
-    // Call API to update task list
-    const res = await fetch(`/api/u/${userId}/tasks/${currentTask.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ list: targetList }),
-    });
+    if (currentList === "now") return { x: 120, y: 0 };
+    if (currentList === "next") return { x: -120, y: 0 };
+    if (currentList === "waiting") return { x: 0, y: 120 };
+    if (currentList === "inbox") return { x: 0, y: -120 };
 
-    if (res.ok) {
-      if (currentIndex + 1 >= tasks.length) {
-        // Session finished for this list
-        handleTransition();
-      } else {
-        setCurrentIndex((prev) => prev + 1);
-      }
-    }
+    return { x: 0, y: 0 };
   };
 
-  const handleTransition = () => {
+  const transitionOffset = getTransitionOffset();
+
+  const handleTransition = useCallback(() => {
     switch (currentList) {
       case "inbox":
-        router.push(`/u/${userId}/swipe/now`);
+        router.push(`/u/${userId}/swipe/now?from=${currentList}`);
         break;
       case "now":
-        router.push(`/u/${userId}/swipe/waiting`);
+        router.push(`/u/${userId}/swipe/waiting?from=${currentList}`);
         break;
       case "waiting":
         // logic: after waiting, if now has items go now, else next
         // Since we are in a client component and don't easily know other list counts here,
         // we'll just follow the sequence or redirect to home to refresh state.
-        router.push(`/u/${userId}/swipe/next`);
+        router.push(`/u/${userId}/swipe/next?from=${currentList}`);
         break;
       case "next":
         router.push(`/u/${userId}`);
@@ -101,7 +79,117 @@ export default function SwipeContainer({
       default:
         router.push(`/u/${userId}`);
     }
-  };
+  }, [currentList, router, userId]);
+
+  const handleSwipe = useCallback(
+    async (
+      direction: SwipeDirection,
+      options?: { alreadyLocked?: boolean },
+    ) => {
+      if (!currentTask || (!options?.alreadyLocked && isSwiping)) return false;
+      if (!options?.alreadyLocked) setIsSwiping(true);
+
+      let targetList = "";
+
+      if (direction === "up") targetList = "done";
+      else {
+        switch (currentList) {
+          case "inbox":
+            if (direction === "right") targetList = "now";
+            if (direction === "left") targetList = "next";
+            if (direction === "down") targetList = "waiting";
+            break;
+          case "now":
+            if (direction === "right") targetList = "now"; // back to end of now
+            if (direction === "left") targetList = "next";
+            if (direction === "down") targetList = "waiting";
+            break;
+          case "waiting":
+            if (direction === "right") targetList = "now";
+            if (direction === "left") targetList = "next";
+            if (direction === "down") targetList = "waiting"; // back to end of waiting
+            break;
+          case "next":
+            if (direction === "right") targetList = "now";
+            if (direction === "left") targetList = "next"; // back to end of next
+            if (direction === "down") targetList = "waiting";
+            break;
+        }
+      }
+
+      // Call API to update task list
+      try {
+        const res = await fetch(`/api/u/${userId}/tasks/${currentTask.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ list: targetList }),
+        });
+
+        if (res.ok) {
+          if (currentIndex + 1 >= tasks.length) {
+            // Session finished for this list
+            handleTransition();
+          } else {
+            setCurrentIndex((prev) => prev + 1);
+          }
+          return true;
+        }
+
+        return false;
+      } finally {
+        setKeyboardSwipe(null);
+        setIsSwiping(false);
+      }
+    },
+    [
+      currentTask,
+      isSwiping,
+      currentList,
+      userId,
+      currentIndex,
+      tasks.length,
+      handleTransition,
+    ],
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement ||
+        active instanceof HTMLSelectElement ||
+        active?.getAttribute("contenteditable") === "true"
+      ) {
+        return;
+      }
+
+      let direction: SwipeDirection | null = null;
+
+      if (event.key === "ArrowRight") direction = "right";
+      if (event.key === "ArrowLeft") direction = "left";
+      if (event.key === "ArrowUp") direction = "up";
+      if (event.key === "ArrowDown") direction = "down";
+
+      if (!direction) return;
+
+      event.preventDefault();
+      if (isSwiping || !currentTask) return;
+
+      setIsSwiping(true);
+      setKeyboardSwipe({ direction, nonce: Date.now() });
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [currentTask, handleSwipe, isSwiping]);
+
+  const handleKeyboardSwipeComplete = useCallback(
+    async (direction: SwipeDirection) => {
+      return handleSwipe(direction, { alreadyLocked: true });
+    },
+    [handleSwipe],
+  );
 
   if (tasks.length === 0 || currentIndex >= tasks.length) {
     return (
@@ -131,7 +219,14 @@ export default function SwipeContainer({
   }
 
   return (
-    <div
+    <motion.div
+      initial={{
+        opacity: fromList ? 0.8 : 1,
+        x: `${transitionOffset.x}%`,
+        y: `${transitionOffset.y}%`,
+      }}
+      animate={{ opacity: 1, x: "0%", y: "0%" }}
+      transition={{ type: "spring", stiffness: 180, damping: 24 }}
       style={{
         position: "relative",
         height: "100%",
@@ -141,11 +236,37 @@ export default function SwipeContainer({
         justifyContent: "center",
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          width: "90%",
+          maxWidth: "400px",
+          height: "70%",
+          borderRadius: "20px",
+          backgroundColor: "rgba(255,255,255,0.12)",
+          transform: "translateY(12px) scale(0.97)",
+          zIndex: 1,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: "90%",
+          maxWidth: "400px",
+          height: "70%",
+          borderRadius: "20px",
+          backgroundColor: "rgba(255,255,255,0.08)",
+          transform: "translateY(24px) scale(0.94)",
+          zIndex: 0,
+        }}
+      />
+
       <AnimatePresence>
         <SwipeCard
           key={currentTask.id}
           task={currentTask}
-          onSwipe={handleSwipe}
+          keyboardSwipe={keyboardSwipe}
+          onKeyboardSwipeComplete={handleKeyboardSwipeComplete}
           userId={userId}
           list={currentList}
         />
@@ -174,26 +295,28 @@ export default function SwipeContainer({
       >
         {currentList.toUpperCase()} ({currentIndex + 1}/{tasks.length})
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function SwipeCard({
   task,
-  onSwipe,
+  keyboardSwipe,
+  onKeyboardSwipeComplete,
   userId,
   list,
 }: {
   task: Task;
-  onSwipe: (dir: any) => void;
+  keyboardSwipe: { direction: SwipeDirection; nonce: number } | null;
+  onKeyboardSwipeComplete: (dir: SwipeDirection) => Promise<boolean>;
   userId: string;
   list: string;
 }) {
+  const controls = useAnimationControls();
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
-
   // Hints
   const rightHint = useTransform(x, [20, 100], [0, 1]);
   const leftHint = useTransform(x, [-20, -100], [0, 1]);
@@ -227,16 +350,76 @@ function SwipeCard({
     return "";
   };
 
-  const handleDragEnd = (_: any, info: any) => {
-    if (info.offset.x > 100) onSwipe("right");
-    else if (info.offset.x < -100) onSwipe("left");
-    else if (info.offset.y < -100) onSwipe("up");
-    else if (info.offset.y > 100) onSwipe("down");
+  const getSlideOutTarget = (direction: SwipeDirection) => {
+    if (direction === "right") return { x: 520, y: 0, rotate: 20 };
+    if (direction === "left") return { x: -520, y: 0, rotate: -20 };
+    if (direction === "up") return { x: 0, y: -520, rotate: 0 };
+    return { x: 0, y: 520, rotate: 0 };
   };
+
+  const slideOutAndCommit = useCallback(
+    async (direction: SwipeDirection) => {
+      if (isAnimatingOut) return;
+      setIsAnimatingOut(true);
+
+      const target = getSlideOutTarget(direction);
+
+      await controls.start({
+        ...target,
+        transition: { duration: 0.22, ease: "easeOut" },
+      });
+
+      const success = await onKeyboardSwipeComplete(direction);
+      if (!success) {
+        await controls.start({
+          x: 0,
+          y: 0,
+          rotate: 0,
+          transition: { duration: 0.18, ease: "easeOut" },
+        });
+        setIsAnimatingOut(false);
+      }
+    },
+    [controls, isAnimatingOut, onKeyboardSwipeComplete],
+  );
+
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    if (isAnimatingOut) return;
+
+    if (info.offset.x > 100) {
+      void slideOutAndCommit("right");
+      return;
+    }
+    if (info.offset.x < -100) {
+      void slideOutAndCommit("left");
+      return;
+    }
+    if (info.offset.y < -100) {
+      void slideOutAndCommit("up");
+      return;
+    }
+    if (info.offset.y > 100) {
+      void slideOutAndCommit("down");
+    }
+  };
+
+  useEffect(() => {
+    if (!keyboardSwipe) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      void slideOutAndCommit(keyboardSwipe.direction);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [keyboardSwipe, slideOutAndCommit]);
 
   return (
     <motion.div
-      drag
+      animate={controls}
+      drag={!isAnimatingOut}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       onDragEnd={handleDragEnd}
       style={{

@@ -54,10 +54,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ userId: string; taskId: string }> },
-) {
+export async function DELETE() {
   // Logic to delete task log entry or task itself if needed
   // For now just basic placeholder
   return NextResponse.json({ success: true });

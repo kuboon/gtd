@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { TaskLog } from "@/types";
 
 export default function TaskLogList({
   userId,
@@ -10,7 +11,7 @@ export default function TaskLogList({
 }: {
   userId: string;
   taskId: string;
-  logs: any[];
+  logs: TaskLog[];
 }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export default function TaskLogList({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-      {logs.map((log: any) => (
+      {logs.map((log) => (
         <div
           key={log.id}
           style={{
@@ -59,7 +60,9 @@ export default function TaskLogList({
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ opacity: 0.5 }}>
-                {new Date(log.created_at * 1000).toLocaleString()}
+                {log.created_at
+                  ? new Date(log.created_at * 1000).toLocaleString()
+                  : "-"}
               </span>
               <button
                 onClick={() => handleDelete(log.id)}

@@ -1,6 +1,8 @@
 import { client } from "@/lib/db";
 import Link from "next/link";
 import TaskForm from "@/components/TaskForm";
+import ExportButtons from "@/components/ExportButtons";
+import type { Task } from "@/types";
 
 async function getListCounts(userId: string) {
   const result = await client.execute({
@@ -23,6 +25,25 @@ async function getListCounts(userId: string) {
   return counts;
 }
 
+async function getAllTasks(userId: string): Promise<Task[]> {
+  const result = await client.execute({
+    sql: "SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at ASC",
+    args: [userId],
+  });
+
+  return result.rows.map((row) => {
+    const task = row as Record<string, unknown>;
+    return {
+      id: String(task.id),
+      user_id: String(task.user_id),
+      content: String(task.content),
+      list: String(task.list) as Task["list"],
+      created_at: task.created_at ? Number(task.created_at) : null,
+      updated_at: task.updated_at ? Number(task.updated_at) : null,
+    };
+  });
+}
+
 export default async function UserHome({
   params,
 }: {
@@ -30,6 +51,7 @@ export default async function UserHome({
 }) {
   const { userId } = await params;
   const counts = await getListCounts(userId);
+  const tasks = await getAllTasks(userId);
 
   const lists = [
     { id: "inbox", label: "Inbox", color: "#007aff" },
@@ -99,6 +121,8 @@ export default async function UserHome({
           {`{ "content": "buy milk" }`}
         </code>
       </section>
+
+      <ExportButtons tasks={tasks} />
 
       <div style={{ marginTop: "20px", textAlign: "center" }}>
         <Link

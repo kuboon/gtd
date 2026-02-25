@@ -18,7 +18,7 @@ export default async function Image({
     args: [taskId],
   });
 
-  const row = result.rows[0] as any | undefined;
+  const row = result.rows[0] as Record<string, unknown> | undefined;
   const task: Partial<Task> | undefined = row
     ? {
         id: String(row.id),
