@@ -10,13 +10,33 @@ export async function PATCH(
   const { userId, taskId } = await params;
 
   try {
-    const body = (await request.json()) as { list?: unknown; push?: unknown };
-    const list = typeof body.list === "string" ? body.list : "";
+    const body = (await request.json()) as {
+      list?: unknown;
+      content?: unknown;
+      push?: unknown;
+    };
+    const list = typeof body.list === "string" ? body.list : null;
+    const content =
+      typeof body.content === "string" ? body.content.trim() : null;
     const shouldSendPush = body.push !== false;
     const validLists = ["inbox", "now", "next", "waiting", "done"];
 
-    if (!validLists.includes(list)) {
+    if (list !== null && !validLists.includes(list)) {
       return NextResponse.json({ error: "Invalid list" }, { status: 400 });
+    }
+
+    if (content !== null && (content.length === 0 || content.length > 100)) {
+      return NextResponse.json(
+        { error: "Content must be 1-100 chars" },
+        { status: 400 },
+      );
+    }
+
+    if (list === null && content === null) {
+      return NextResponse.json(
+        { error: "Either list or content is required" },
+        { status: 400 },
+      );
     }
 
     // Get current list for logging
@@ -29,24 +49,33 @@ export async function PATCH(
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    const fromList = currentTask.rows[0].list;
-    const content = String(currentTask.rows[0].content || "Task");
+    const fromList = String(currentTask.rows[0].list);
+    const currentContent = String(currentTask.rows[0].content || "Task");
 
-    await client.batch(
-      [
-        {
-          sql: "UPDATE tasks SET list = ?, updated_at = (strftime('%s', 'now')) WHERE id = ?",
-          args: [list, taskId],
-        },
-        {
-          sql: "INSERT INTO task_logs (id, task_id, from_list, to_list) VALUES (?, ?, ?, ?)",
-          args: [nanoid(), taskId, fromList, list],
-        },
-      ],
-      "write",
-    );
+    if (list !== null) {
+      await client.batch(
+        [
+          {
+            sql: "UPDATE tasks SET list = ?, updated_at = (strftime('%s', 'now')) WHERE id = ?",
+            args: [list, taskId],
+          },
+          {
+            sql: "INSERT INTO task_logs (id, task_id, from_list, to_list) VALUES (?, ?, ?, ?)",
+            args: [nanoid(), taskId, fromList, list],
+          },
+        ],
+        "write",
+      );
+    }
 
-    if (shouldSendPush) {
+    if (content !== null) {
+      await client.execute({
+        sql: "UPDATE tasks SET content = ?, updated_at = (strftime('%s', 'now')) WHERE id = ?",
+        args: [content, taskId],
+      });
+    }
+
+    if (list !== null && shouldSendPush) {
       const userResult = await client.execute({
         sql: "SELECT push_subscription FROM users WHERE id = ?",
         args: [userId],
@@ -58,7 +87,7 @@ export async function PATCH(
         try {
           await sendPushNotification(pushSubscription, {
             title: "tindone",
-            body: `${content} moved to ${list}`,
+            body: `${currentContent} moved to ${list}`,
             url: `/u/${userId}/tasks/${taskId}`,
           });
         } catch (error) {

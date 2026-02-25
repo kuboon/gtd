@@ -5,6 +5,7 @@ import Link from "next/link";
 import ListSelector from "@/components/ListSelector";
 import TaskLogList from "@/components/TaskLogList";
 import ApiInst from "@/components/ApiInst";
+import TaskContentEditor from "@/components/TaskContentEditor";
 
 async function getTaskData(
   taskId: string,
@@ -91,9 +92,11 @@ export default async function TaskDetailPage({
       </header>
 
       <section style={{ marginBottom: "30px" }}>
-        <h1 style={{ fontSize: "1.8rem", marginBottom: "10px" }}>
-          {String(task.content)}
-        </h1>
+        <TaskContentEditor
+          userId={userId}
+          taskId={taskId}
+          initialContent={String(task.content)}
+        />
         <div style={{ color: "var(--text-gray)" }}>
           Current List:{" "}
           <span style={{ fontWeight: "bold", color: "var(--foreground)" }}>

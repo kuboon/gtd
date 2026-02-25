@@ -204,27 +204,34 @@ export default function SwipeContainer({
         }}
       >
         <h2>No more tasks in {currentList}</h2>
-        <button
-          onClick={handleTransition}
+        <div
           style={{
             marginTop: "20px",
-            color: "var(--primary)",
-            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
           }}
         >
-          Next List →
-        </button>
-        <Link
-          href={`/u/${userId}`}
-          style={{
-            marginTop: "12px",
-            color: "white",
-            opacity: 0.8,
-            textDecoration: "none",
-          }}
-        >
-          ← back to home
-        </Link>
+          <Link
+            href={`/u/${userId}`}
+            style={{
+              color: "var(--primary)",
+              fontWeight: "bold",
+              textDecoration: "none",
+            }}
+          >
+            ← back to home
+          </Link>
+          <button
+            onClick={handleTransition}
+            style={{
+              color: "var(--primary)",
+              fontWeight: "bold",
+            }}
+          >
+            Next List →
+          </button>
+        </div>
       </div>
     );
   }
