@@ -10,22 +10,26 @@ export default function TaskForm({ userId }: { userId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || loading) return;
+    const trimmed = content.trim();
+    if (!trimmed || loading) return;
 
+    setContent("");
     setLoading(true);
     try {
       const res = await fetch(`/api/u/${userId}/inbox`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: trimmed }),
       });
 
       if (res.ok) {
-        setContent("");
         router.refresh();
+      } else {
+        setContent(trimmed);
       }
     } catch (error) {
       console.error(error);
+      setContent(trimmed);
     } finally {
       setLoading(false);
     }
