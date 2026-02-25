@@ -1,0 +1,5 @@
+- [ ] swipe が別の list へ遷移するとき、わかりやすく切り替えアニメーション
+  - now へ切り替わるときはカードスタックが右からスライドイン、など
+- [ ] キーボードでも swipe できるようにする
+  - 右矢印で right swipe、左矢印で left swipe、上矢印で up swipe、下矢印で down swipe
+- [ ] task 詳細画面左上の back to home は back to list に変更

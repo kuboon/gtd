@@ -7,7 +7,7 @@ async function getListCounts(userId: string) {
     sql: "SELECT list, COUNT(*) as count FROM tasks WHERE user_id = ? GROUP BY list",
     args: [userId],
   });
-  
+
   const counts: Record<string, number> = {
     inbox: 0,
     now: 0,
@@ -46,8 +46,8 @@ export default async function UserHome({ params }: { params: Promise<{ userId: s
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
         {lists.map((list) => (
-          <Link 
-            key={list.id} 
+          <Link
+            key={list.id}
             href={`/u/${userId}/swipe/${list.id}`}
             style={{
               backgroundColor: 'var(--gray)',
@@ -70,11 +70,11 @@ export default async function UserHome({ params }: { params: Promise<{ userId: s
       <section style={{ marginTop: '40px', padding: '20px', backgroundColor: 'var(--gray)', borderRadius: '15px' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '10px' }}>Quick API</h2>
         <code style={{ fontSize: '0.8rem', display: 'block', wordBreak: 'break-all', opacity: 0.7 }}>
-          POST /api/u/{userId}/inbox<br/>
+          POST /api/u/{userId}/inbox<br />
           {`{ "content": "buy milk" }`}
         </code>
       </section>
-      
+
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
         <Link href={`/u/${userId}/done`} style={{ color: 'var(--text-gray)', fontSize: '0.9rem' }}>
           View Done Tasks ({counts.done})
