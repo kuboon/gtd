@@ -1,4 +1,5 @@
 import { client } from "@/lib/db";
+import { sendPushNotification } from "@/lib/push";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
@@ -6,7 +7,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ userId: string; taskId: string }> },
 ) {
-  const { taskId } = await params;
+  const { userId, taskId } = await params;
 
   try {
     const { list } = await request.json();
@@ -18,8 +19,8 @@ export async function PATCH(
 
     // Get current list for logging
     const currentTask = await client.execute({
-      sql: "SELECT list FROM tasks WHERE id = ?",
-      args: [taskId],
+      sql: "SELECT list, content FROM tasks WHERE id = ? AND user_id = ?",
+      args: [taskId, userId],
     });
 
     if (currentTask.rows.length === 0) {
@@ -27,6 +28,7 @@ export async function PATCH(
     }
 
     const fromList = currentTask.rows[0].list;
+    const content = String(currentTask.rows[0].content || "Task");
 
     await client.batch(
       [
@@ -42,7 +44,24 @@ export async function PATCH(
       "write",
     );
 
-    // TODO: Trigger Web Push notification here
+    const userResult = await client.execute({
+      sql: "SELECT push_subscription FROM users WHERE id = ?",
+      args: [userId],
+    });
+
+    const pushSubscription = userResult.rows[0]?.push_subscription;
+
+    if (typeof pushSubscription === "string" && pushSubscription.length > 0) {
+      try {
+        await sendPushNotification(pushSubscription, {
+          title: "tindone",
+          body: `${content} moved to ${list}`,
+          url: `/u/${userId}/tasks/${taskId}`,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

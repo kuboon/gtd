@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
+import {
+  ensurePushSubscription,
+  syncPushSubscription,
+} from "@/lib/push-client";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -11,6 +15,8 @@ export default function LandingPage() {
   useEffect(() => {
     const savedUserId = localStorage.getItem("tindone_user_id");
     if (savedUserId) {
+      document.cookie = `tindone_user_id=${savedUserId}; path=/; max-age=31536000; SameSite=Lax`;
+      void syncPushSubscription(savedUserId);
       router.push(`/u/${savedUserId}`);
     }
   }, [router]);
@@ -19,15 +25,17 @@ export default function LandingPage() {
     setLoading(true);
     try {
       const userId = nanoid();
+      const pushSubscription = await ensurePushSubscription();
 
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId }),
+        body: JSON.stringify({ id: userId, pushSubscription }),
       });
 
       if (res.ok) {
         localStorage.setItem("tindone_user_id", userId);
+        document.cookie = `tindone_user_id=${userId}; path=/; max-age=31536000; SameSite=Lax`;
         router.push(`/u/${userId}`);
       }
     } catch (error) {

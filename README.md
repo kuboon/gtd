@@ -22,6 +22,14 @@ Swipe your way to GTD nirvana.
    TURSO_DATABASE_URL=libsql://your-db-name.turso.io
    TURSO_AUTH_TOKEN=your-auth-token
    NEXT_PUBLIC_BASE_URL=http://localhost:3000
+   NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
+   VAPID_PRIVATE_KEY=your-vapid-private-key
+   VAPID_SUBJECT=mailto:you@example.com
+   ```
+
+   Generate VAPID keys with:
+   ```bash
+   npx web-push generate-vapid-keys
    ```
 
 3. **Install & Run**:
@@ -32,7 +40,7 @@ Swipe your way to GTD nirvana.
 
 ## Features
 - **GTD Lists**: Inbox, Now, Next, Waiting, Done.
-- **Tinder Swipe**: Quickly process your inbox or review lists with gestures.
+- **Tinder Like Swipe**: Quickly process your inbox or review lists with gestures.
 - **Task Log**: Automatic recording of every task movement.
 - **Remote Update**: Copy-paste cURL/Wget commands from task details to update status from your terminal.
 - **Dynamic OG Image**: Shareable task URLs with beautiful preview images.
