@@ -10,7 +10,9 @@ export async function PATCH(
   const { userId, taskId } = await params;
 
   try {
-    const { list } = await request.json();
+    const body = (await request.json()) as { list?: unknown; push?: unknown };
+    const list = typeof body.list === "string" ? body.list : "";
+    const shouldSendPush = body.push !== false;
     const validLists = ["inbox", "now", "next", "waiting", "done"];
 
     if (!validLists.includes(list)) {
@@ -44,22 +46,24 @@ export async function PATCH(
       "write",
     );
 
-    const userResult = await client.execute({
-      sql: "SELECT push_subscription FROM users WHERE id = ?",
-      args: [userId],
-    });
+    if (shouldSendPush) {
+      const userResult = await client.execute({
+        sql: "SELECT push_subscription FROM users WHERE id = ?",
+        args: [userId],
+      });
 
-    const pushSubscription = userResult.rows[0]?.push_subscription;
+      const pushSubscription = userResult.rows[0]?.push_subscription;
 
-    if (typeof pushSubscription === "string" && pushSubscription.length > 0) {
-      try {
-        await sendPushNotification(pushSubscription, {
-          title: "tindone",
-          body: `${content} moved to ${list}`,
-          url: `/u/${userId}/tasks/${taskId}`,
-        });
-      } catch (error) {
-        console.error(error);
+      if (typeof pushSubscription === "string" && pushSubscription.length > 0) {
+        try {
+          await sendPushNotification(pushSubscription, {
+            title: "tindone",
+            body: `${content} moved to ${list}`,
+            url: `/u/${userId}/tasks/${taskId}`,
+          });
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
 

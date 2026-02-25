@@ -23,7 +23,7 @@ export default function ListSelector({
       const res = await fetch(`/api/u/${userId}/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ list }),
+        body: JSON.stringify({ list, push: false }),
       });
 
       if (res.ok) {
