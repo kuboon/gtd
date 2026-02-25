@@ -31,9 +31,7 @@ export default function RootLayout({
         {/* Declarative Web Push */}
         <link rel="push-subscription" href="/api/push-subscription" />
       </head>
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

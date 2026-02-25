@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function TaskForm({ userId }: { userId: string }) {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -15,13 +15,13 @@ export default function TaskForm({ userId }: { userId: string }) {
     setLoading(true);
     try {
       const res = await fetch(`/api/u/${userId}/inbox`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
 
       if (res.ok) {
-        setContent('');
+        setContent("");
         router.refresh();
       }
     } catch (error) {
@@ -32,7 +32,7 @@ export default function TaskForm({ userId }: { userId: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px' }}>
+    <form onSubmit={handleSubmit} style={{ display: "flex", gap: "10px" }}>
       <input
         type="text"
         maxLength={100}
@@ -41,21 +41,21 @@ export default function TaskForm({ userId }: { userId: string }) {
         onChange={(e) => setContent(e.target.value)}
         style={{
           flex: 1,
-          padding: '12px 15px',
-          borderRadius: '10px',
-          border: '1px solid #ddd',
-          fontSize: '1rem'
+          padding: "12px 15px",
+          borderRadius: "10px",
+          border: "1px solid #ddd",
+          fontSize: "1rem",
         }}
       />
       <button
         type="submit"
         disabled={loading}
         style={{
-          backgroundColor: 'var(--primary)',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '10px',
-          fontWeight: 'bold'
+          backgroundColor: "var(--primary)",
+          color: "white",
+          padding: "10px 20px",
+          borderRadius: "10px",
+          fontWeight: "bold",
         }}
       >
         Add

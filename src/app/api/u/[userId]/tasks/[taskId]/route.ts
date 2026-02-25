@@ -4,14 +4,14 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ userId: string, taskId: string }> }
+  { params }: { params: Promise<{ userId: string; taskId: string }> },
 ) {
   const { taskId } = await params;
-  
+
   try {
     const { list } = await request.json();
-    const validLists = ['inbox', 'now', 'next', 'waiting', 'done'];
-    
+    const validLists = ["inbox", "now", "next", "waiting", "done"];
+
     if (!validLists.includes(list)) {
       return NextResponse.json({ error: "Invalid list" }, { status: 400 });
     }
@@ -28,29 +28,35 @@ export async function PATCH(
 
     const fromList = currentTask.rows[0].list;
 
-    await client.batch([
-      {
-        sql: "UPDATE tasks SET list = ?, updated_at = (strftime('%s', 'now')) WHERE id = ?",
-        args: [list, taskId],
-      },
-      {
-        sql: "INSERT INTO task_logs (id, task_id, from_list, to_list) VALUES (?, ?, ?, ?)",
-        args: [nanoid(), taskId, fromList, list],
-      }
-    ], "write");
+    await client.batch(
+      [
+        {
+          sql: "UPDATE tasks SET list = ?, updated_at = (strftime('%s', 'now')) WHERE id = ?",
+          args: [list, taskId],
+        },
+        {
+          sql: "INSERT INTO task_logs (id, task_id, from_list, to_list) VALUES (?, ?, ?, ?)",
+          args: [nanoid(), taskId, fromList, list],
+        },
+      ],
+      "write",
+    );
 
     // TODO: Trigger Web Push notification here
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update task" },
+      { status: 500 },
+    );
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ userId: string, taskId: string }> }
+  { params }: { params: Promise<{ userId: string; taskId: string }> },
 ) {
   // Logic to delete task log entry or task itself if needed
   // For now just basic placeholder

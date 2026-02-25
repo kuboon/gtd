@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ userId: string, taskId: string, logId: string }> }
+  {
+    params,
+  }: { params: Promise<{ userId: string; taskId: string; logId: string }> },
 ) {
   try {
     const { taskId, logId } = await params;
@@ -15,6 +17,9 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to delete log" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete log" },
+      { status: 500 },
+    );
   }
 }

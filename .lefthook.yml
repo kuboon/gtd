@@ -3,5 +3,5 @@ pre-commit:
   commands:
     biome-format:
       run: npm run format
-      include: "**/*.{js,ts,jsx,tsx,json,css,md,html,tsx,tsx}" 
+      include: "**/*.{js,ts,jsx,tsx,json,css,md,html,tsx,tsx}"
       exclude: "node_modules/**"

@@ -1,9 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function ListSelector({ userId, taskId, currentList }: { userId: string, taskId: string, currentList: string }) {
+export default function ListSelector({
+  userId,
+  taskId,
+  currentList,
+}: {
+  userId: string;
+  taskId: string;
+  currentList: string;
+}) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -13,8 +21,8 @@ export default function ListSelector({ userId, taskId, currentList }: { userId: 
     setLoading(true);
     try {
       const res = await fetch(`/api/u/${userId}/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ list }),
       });
 
@@ -28,23 +36,24 @@ export default function ListSelector({ userId, taskId, currentList }: { userId: 
     }
   };
 
-  const lists = ['inbox', 'now', 'next', 'waiting', 'done'];
+  const lists = ["inbox", "now", "next", "waiting", "done"];
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-      {lists.map(list => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+      {lists.map((list) => (
         <button
           key={list}
           disabled={loading || list === currentList}
           onClick={() => handleMove(list)}
           style={{
-            padding: '8px 15px',
-            borderRadius: '20px',
-            backgroundColor: list === currentList ? 'var(--primary)' : 'var(--gray)',
-            color: list === currentList ? 'white' : 'var(--foreground)',
-            fontWeight: 'bold',
+            padding: "8px 15px",
+            borderRadius: "20px",
+            backgroundColor:
+              list === currentList ? "var(--primary)" : "var(--gray)",
+            color: list === currentList ? "white" : "var(--foreground)",
+            fontWeight: "bold",
             opacity: list === currentList ? 1 : 0.7,
-            cursor: list === currentList ? 'default' : 'pointer'
+            cursor: list === currentList ? "default" : "pointer",
           }}
         >
           {list.toUpperCase()}

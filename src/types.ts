@@ -1,4 +1,4 @@
-export type ListType = 'inbox' | 'now' | 'next' | 'waiting' | 'done';
+export type ListType = "inbox" | "now" | "next" | "waiting" | "done";
 
 export interface User {
   id: string;

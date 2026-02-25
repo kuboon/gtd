@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "biome format --write ./src",
-    "format:check": "biome format ./src",
+    "format": "npx @biomejs/biome format --write ./src",
+    "format:check": "npx @biomejs/biome format ./src",
     "prepare": "npx lefthook install"
   },
   "dependencies": {
@@ -26,7 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "typescript": "^5",
-    "biome": "*",
+    "@biomejs/biome": "^2.4.4",
     "lefthook": "*"
   }
 }
