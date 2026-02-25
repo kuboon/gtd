@@ -4,22 +4,40 @@ import { useMemo, useState } from "react";
 
 const tabs = ["curl", "wget", "fetch"] as const;
 type ApiTab = (typeof tabs)[number];
+type ApiMode = "task-update" | "task-create";
 
-export default function ApiInst({ apiUrl }: { apiUrl: string }) {
+export default function ApiInst({
+  apiUrl,
+  mode = "task-update",
+}: {
+  apiUrl: string;
+  mode?: ApiMode;
+}) {
   const [activeTab, setActiveTab] = useState<ApiTab>("curl");
   const [copied, setCopied] = useState(false);
 
   const tabContent = useMemo<Record<ApiTab, string>>(
-    () => ({
-      curl: `curl -X PATCH ${apiUrl} -H "Content-Type: application/json" -d '{"list":"now"}'`,
-      wget: `wget --method=PATCH --body-data='{"list":"now"}' --header="Content-Type: application/json" ${apiUrl}`,
-      fetch: `await fetch("${apiUrl}", {
+    () =>
+      mode === "task-create"
+        ? {
+            curl: `curl -X POST ${apiUrl} -H "Content-Type: application/json" -d '{"content":"buy milk"}'`,
+            wget: `wget --method=POST --body-data='{"content":"buy milk"}' --header="Content-Type: application/json" ${apiUrl}`,
+            fetch: `await fetch("${apiUrl}", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ content: "buy milk" }),
+});`,
+          }
+        : {
+            curl: `curl -X PATCH ${apiUrl} -H "Content-Type: application/json" -d '{"list":"now"}'`,
+            wget: `wget --method=PATCH --body-data='{"list":"now"}' --header="Content-Type: application/json" ${apiUrl}`,
+            fetch: `await fetch("${apiUrl}", {
   method: "PATCH",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ list: "now" }),
 });`,
-    }),
-    [apiUrl],
+          },
+    [apiUrl, mode],
   );
 
   const handleCopy = async () => {

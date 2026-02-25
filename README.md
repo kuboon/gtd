@@ -44,3 +44,21 @@ Swipe your way to GTD nirvana.
 - **Task Log**: Automatic recording of every task movement.
 - **Remote Update**: Copy-paste cURL/Wget commands from task details to update status from your terminal.
 - **Dynamic OG Image**: Shareable task URLs with beautiful preview images.
+
+## Task Update API
+
+`PATCH /api/u/:userId/tasks/:taskId`
+
+- Request body:
+   ```json
+   { "list": "now" }
+   ```
+- Optional `push` flag (default: `true`):
+   - `push: true` or omitted: send web push notification.
+   - `push: false`: skip notification (used by in-app updates to avoid self-notifications).
+
+Example without push notification:
+
+```json
+{ "list": "now", "push": false }
+```

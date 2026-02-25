@@ -2,6 +2,7 @@ import { client } from "@/lib/db";
 import Link from "next/link";
 import TaskForm from "@/components/TaskForm";
 import ExportButtons from "@/components/ExportButtons";
+import ApiInst from "@/components/ApiInst";
 import type { Task } from "@/types";
 
 async function getListCounts(userId: string) {
@@ -52,6 +53,8 @@ export default async function UserHome({
   const { userId } = await params;
   const counts = await getListCounts(userId);
   const tasks = await getAllTasks(userId);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const quickApiUrl = `${baseUrl}/api/u/${userId}/inbox`;
 
   const lists = [
     { id: "inbox", label: "Inbox", color: "#007aff" },
@@ -99,27 +102,8 @@ export default async function UserHome({
         ))}
       </div>
 
-      <section
-        style={{
-          marginTop: "40px",
-          padding: "20px",
-          backgroundColor: "var(--gray)",
-          borderRadius: "15px",
-        }}
-      >
-        <h2 style={{ fontSize: "1.1rem", marginBottom: "10px" }}>Quick API</h2>
-        <code
-          style={{
-            fontSize: "0.8rem",
-            display: "block",
-            wordBreak: "break-all",
-            opacity: 0.7,
-          }}
-        >
-          POST /api/u/{userId}/inbox
-          <br />
-          {`{ "content": "buy milk" }`}
-        </code>
+      <section style={{ marginTop: "40px" }}>
+        <ApiInst apiUrl={quickApiUrl} mode="task-create" />
       </section>
 
       <ExportButtons tasks={tasks} />

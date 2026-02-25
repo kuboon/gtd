@@ -214,6 +214,17 @@ export default function SwipeContainer({
         >
           Next List →
         </button>
+        <Link
+          href={`/u/${userId}`}
+          style={{
+            marginTop: "12px",
+            color: "white",
+            opacity: 0.8,
+            textDecoration: "none",
+          }}
+        >
+          ← back to home
+        </Link>
       </div>
     );
   }

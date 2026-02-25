@@ -12,4 +12,5 @@
   - [x] clipboard にコピーする機能をつける
 - [x] home に Export 機能を追加
   - [x] markdown, json のボタンを追加して、タップすると clipboard にコピーする
-
+- [x] home の QuickAPI も ApiInst コンポーネントを流用するようにする
+- [x] "No more ~~ " の画面に <- back to home のリンクを追加する
