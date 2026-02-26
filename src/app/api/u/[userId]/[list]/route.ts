@@ -14,8 +14,15 @@ export async function POST(
   }
 
   try {
-    const { content } = await request.json();
-    if (!content || content.length > 100) {
+    const contentType = request.headers.get("content-type") || "";
+    let content: unknown;
+    if (contentType.includes("application/json")) {
+      const body = await request.json();
+      content = body?.content;
+    } else {
+      content = (await request.text()).trim();
+    }
+    if (!content || typeof content !== "string" || content.length > 100) {
       return NextResponse.json(
         { error: "Content must be 1-100 chars" },
         { status: 400 },

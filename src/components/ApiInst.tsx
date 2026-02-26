@@ -20,21 +20,21 @@ export default function ApiInst({
     () =>
       mode === "task-create"
         ? {
-            curl: `curl -X POST ${apiUrl} -H "Content-Type: application/json" -d '{"content":"buy milk"}'`,
-            wget: `wget --method=POST --body-data='{"content":"buy milk"}' --header="Content-Type: application/json" ${apiUrl}`,
+            curl: `curl -X POST ${apiUrl} -H "Content-Type: text/plain" -d 'buy milk'`,
+            wget: `wget --method=POST --body-data='buy milk' --header="Content-Type: text/plain" ${apiUrl}`,
             fetch: `await fetch("${apiUrl}", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ content: "buy milk" }),
+  headers: { "Content-Type": "text/plain" },
+  body: "buy milk",
 });`,
           }
         : {
-            curl: `curl -X PATCH ${apiUrl} -H "Content-Type: application/json" -d '{"list":"now"}'`,
-            wget: `wget --method=PATCH --body-data='{"list":"now"}' --header="Content-Type: application/json" ${apiUrl}`,
+            curl: `curl -X PATCH ${apiUrl} -H "Content-Type: application/json" -d '{"list":"done"}'`,
+            wget: `wget --method=PATCH --body-data='{"list":"done"}' --header="Content-Type: application/json" ${apiUrl}`,
             fetch: `await fetch("${apiUrl}", {
   method: "PATCH",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ list: "now" }),
+  body: JSON.stringify({ list: "done" }),
 });`,
           },
     [apiUrl, mode],
@@ -115,6 +115,18 @@ export default function ApiInst({
       >
         {tabContent[activeTab]}
       </code>
+      {mode === "task-update" && (
+        <p
+          style={{
+            marginTop: "8px",
+            fontSize: "0.75rem",
+            color: "var(--text-gray)",
+          }}
+        >
+          Add <code>{'"push": false'}</code> to the body to suppress push
+          notifications.
+        </p>
+      )}
     </section>
   );
 }
