@@ -82,7 +82,7 @@ export default function SwipeContainer({
   }, [currentList, router, userId]);
 
   const handleSwipe = useCallback(
-    async (
+    (
       direction: SwipeDirection,
       options?: { alreadyLocked?: boolean },
     ) => {
@@ -117,29 +117,23 @@ export default function SwipeContainer({
         }
       }
 
-      // Call API to update task list
-      try {
-        const res = await fetch(`/api/u/${userId}/tasks/${currentTask.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ list: targetList, push: false }),
-        });
-
-        if (res.ok) {
-          if (currentIndex + 1 >= tasks.length) {
-            // Session finished for this list
-            handleTransition();
-          } else {
-            setCurrentIndex((prev) => prev + 1);
-          }
-          return true;
-        }
-
-        return false;
-      } finally {
-        setKeyboardSwipe(null);
-        setIsSwiping(false);
+      // Optimistically advance to next card immediately
+      setKeyboardSwipe(null);
+      setIsSwiping(false);
+      if (currentIndex + 1 >= tasks.length) {
+        handleTransition();
+      } else {
+        setCurrentIndex((prev) => prev + 1);
       }
+
+      // Fire API call in background
+      fetch(`/api/u/${userId}/tasks/${currentTask.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list: targetList, push: false }),
+      }).catch((error) => console.error(error));
+
+      return true;
     },
     [
       currentTask,
