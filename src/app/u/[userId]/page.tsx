@@ -3,6 +3,7 @@ import Link from "next/link";
 import TaskForm from "@/components/TaskForm";
 import ExportButtons from "@/components/ExportButtons";
 import ApiInst from "@/components/ApiInst";
+import PushNotificationButton from "@/components/PushNotificationButton";
 import type { Task } from "@/types";
 
 async function getListCounts(userId: string) {
@@ -65,8 +66,17 @@ export default async function UserHome({
 
   return (
     <main style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <header style={{ marginBottom: "30px", textAlign: "center" }}>
+      <header
+        style={{
+          marginBottom: "30px",
+          textAlign: "center",
+          position: "relative",
+        }}
+      >
         <h1 style={{ fontSize: "2rem", color: "var(--primary)" }}>tindone</h1>
+        <div style={{ position: "absolute", top: 0, right: 0 }}>
+          <PushNotificationButton userId={userId} />
+        </div>
       </header>
 
       <section style={{ marginBottom: "30px" }}>
