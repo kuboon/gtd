@@ -329,11 +329,20 @@ function SwipeCard({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  // Hints
-  const rightHint = useTransform(x, [20, 100], [0, 1]);
-  const leftHint = useTransform(x, [-20, -100], [0, 1]);
-  const upHint = useTransform(y, [-20, -100], [0, 1]);
-  const downHint = useTransform(y, [20, 100], [0, 1]);
+  // Hints (base opacity 0.15 so directions are always faintly visible)
+  const hintBase = 0.15;
+  const rightHint = useTransform(x, (v) =>
+    Math.min(1, Math.max(hintBase, hintBase + (v / 100) * (1 - hintBase))),
+  );
+  const leftHint = useTransform(x, (v) =>
+    Math.min(1, Math.max(hintBase, hintBase + (-v / 100) * (1 - hintBase))),
+  );
+  const upHint = useTransform(y, (v) =>
+    Math.min(1, Math.max(hintBase, hintBase + (-v / 100) * (1 - hintBase))),
+  );
+  const downHint = useTransform(y, (v) =>
+    Math.min(1, Math.max(hintBase, hintBase + (v / 100) * (1 - hintBase))),
+  );
 
   const getLabel = (dir: "right" | "left" | "up" | "down") => {
     if (dir === "up") return "DONE";
@@ -455,27 +464,53 @@ function SwipeCard({
       }}
       whileTap={{ cursor: "grabbing" }}
     >
-      <Link
-        href={`/u/${userId}/tasks/${task.id}`}
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <h2
+      {/^https?:\/\/\S+$/.test(task.content.trim()) ? (
+        <a
+          href={task.content.trim()}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
-            fontSize: "1.5rem",
-            textAlign: "center",
-            color: "#111",
-            wordBreak: "break-word",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {task.content}
-        </h2>
-      </Link>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              textAlign: "center",
+              color: "#111",
+              wordBreak: "break-all",
+            }}
+          >
+            🔗 {task.content}
+          </h2>
+        </a>
+      ) : (
+        <Link
+          href={`/u/${userId}/tasks/${task.id}`}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              textAlign: "center",
+              color: "#111",
+              wordBreak: "break-word",
+            }}
+          >
+            {task.content}
+          </h2>
+        </Link>
+      )}
 
       {/* Visual Hints */}
       <motion.div
