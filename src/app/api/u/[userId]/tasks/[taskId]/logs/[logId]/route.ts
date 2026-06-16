@@ -1,5 +1,6 @@
 import { client } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
@@ -8,7 +9,11 @@ export async function DELETE(
   }: { params: Promise<{ userId: string; taskId: string; logId: string }> },
 ) {
   try {
-    const { taskId, logId } = await params;
+    const { userId, taskId, logId } = await params;
+
+    if ((await getSessionUserId()) !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     await client.execute({
       sql: "DELETE FROM task_logs WHERE id = ? AND task_id = ?",
       args: [logId, taskId],

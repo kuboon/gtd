@@ -1,12 +1,17 @@
 import { client } from "@/lib/db";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ userId: string; list: string }> },
 ) {
   const { userId, list } = await params;
+
+  if ((await getSessionUserId()) !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const validLists = ["inbox", "now", "next", "waiting"];
   if (!validLists.includes(list)) {

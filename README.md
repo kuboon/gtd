@@ -25,6 +25,10 @@ Swipe your way to GTD nirvana.
    NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
    VAPID_PRIVATE_KEY=your-vapid-private-key
    VAPID_SUBJECT=mailto:you@example.com
+   # Authentication via id.kbn.one (Passkeys / DPoP identity provider)
+   IDP_BASE_URL=https://id.kbn.one
+   NEXT_PUBLIC_IDP_BASE_URL=https://id.kbn.one
+   GTD_SESSION_SECRET=your-random-32-byte-secret
    ```
 
    Generate VAPID keys with:
@@ -32,7 +36,18 @@ Swipe your way to GTD nirvana.
    npx web-push generate-vapid-keys
    ```
 
-3. **Install & Run**:
+   Generate a session secret with:
+   ```bash
+   openssl rand -base64 32
+   ```
+
+3. **Authentication (id.kbn.one)**:
+   Users sign in with passkeys via [id.kbn.one](https://github.com/kuboon/id.kbn.one).
+   The app's origin must be whitelisted in the IdP's `AUTHORIZE_WHITELIST`
+   (both `http://localhost:3000` for dev and your production origin).
+   For existing databases, apply `migrations/001_add_idp_sub.sql`.
+
+4. **Install & Run**:
    ```bash
    npm install
    npm run dev
