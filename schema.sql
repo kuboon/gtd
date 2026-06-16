@@ -1,8 +1,11 @@
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
+    idp_sub TEXT, -- subject from the id.kbn.one identity provider (null = legacy anonymous)
     push_subscription TEXT,
     created_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_idp_sub ON users(idp_sub);
 
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,

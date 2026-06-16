@@ -2,48 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { nanoid } from "nanoid";
-import {
-  ensurePushSubscription,
-  syncPushSubscription,
-} from "@/lib/push-client";
+import LoginButton from "@/components/LoginButton";
 
 export default function LandingPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const savedUserId = localStorage.getItem("tindone_user_id");
-    if (savedUserId) {
-      document.cookie = `tindone_user_id=${savedUserId}; path=/; max-age=31536000; SameSite=Lax`;
-      void syncPushSubscription(savedUserId);
-      router.push(`/u/${savedUserId}`);
-    }
-  }, [router]);
-
-  const handleStart = async () => {
-    setLoading(true);
-    try {
-      const userId = nanoid();
-      const pushSubscription = await ensurePushSubscription();
-
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, pushSubscription }),
+    let cancelled = false;
+    // If already signed in, go straight to the user's home.
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { userId: string } | null) => {
+        if (cancelled) return;
+        if (data?.userId) {
+          router.replace(`/u/${data.userId}`);
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setChecking(false);
       });
-
-      if (res.ok) {
-        localStorage.setItem("tindone_user_id", userId);
-        document.cookie = `tindone_user_id=${userId}; path=/; max-age=31536000; SameSite=Lax`;
-        router.push(`/u/${userId}`);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   return (
     <main
@@ -77,21 +61,11 @@ export default function LandingPage() {
       >
         Swipe your way to GTD nirvana.
       </p>
-      <button
-        onClick={handleStart}
-        disabled={loading}
-        style={{
-          backgroundColor: "var(--primary)",
-          color: "white",
-          padding: "18px 50px",
-          borderRadius: "40px",
-          fontSize: "1.2rem",
-          fontWeight: "bold",
-          boxShadow: "0 4px 15px rgba(255, 68, 88, 0.4)",
-        }}
-      >
-        {loading ? "Setting up..." : "Get Started"}
-      </button>
+      {checking ? (
+        <p style={{ color: "var(--text-gray)" }}>Loading…</p>
+      ) : (
+        <LoginButton />
+      )}
     </main>
   );
 }

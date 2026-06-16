@@ -2,12 +2,17 @@ import { client } from "@/lib/db";
 import { sendPushNotification } from "@/lib/push";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ userId: string; taskId: string }> },
 ) {
   const { userId, taskId } = await params;
+
+  if ((await getSessionUserId()) !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const body = (await request.json()) as {

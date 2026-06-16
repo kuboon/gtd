@@ -1,5 +1,6 @@
 import { client } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getSessionUserId } from "@/lib/auth";
 
 function normalizeSubscription(value: unknown): string | null {
   if (!value) {
@@ -19,6 +20,11 @@ export async function PUT(
 ) {
   try {
     const { userId } = await params;
+
+    if ((await getSessionUserId()) !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const rawSubscription =
